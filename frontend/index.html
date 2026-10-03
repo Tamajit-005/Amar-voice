@@ -420,6 +420,22 @@
     let currentSpeaker = 'default';
     let lastBlobUrl = null;
 
+    // Per-device space: one random ID per phone, persisted locally. The backend
+    // namespaces voices by it, so each device sees only its own profiles.
+    // No login, no tracking — lose it (cleared storage) and you start a fresh space.
+    const UID = (() => {
+      let id = null;
+      try { id = localStorage.getItem('amar_uid'); } catch (e) { /* private mode */ }
+      if (!id || !/^u[0-9a-f]{12}$/.test(id)) {
+        const bytes = new Uint8Array(6);
+        crypto.getRandomValues(bytes);
+        id = 'u' + Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+        try { localStorage.setItem('amar_uid', id); } catch (e) { /* private mode */ }
+      }
+      return id;
+    })();
+    const withUser = (url) => url + (url.includes('?') ? '&' : '?') + 'user=' + encodeURIComponent(UID);
+
     // Register Service Worker for true offline PWA
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration note:', err));
@@ -449,7 +465,7 @@
           const c = await caches.open(n);
           const keys = await c.keys();
           await Promise.all(keys
-            .filter((r) => r.url.includes('/api/presets/') && r.url.includes(`speaker=${encodeURIComponent(speaker)}`))
+            .filter((r) => r.url.includes('/api/presets/') && r.url.includes(`speaker=${encodeURIComponent(speaker)}`) && r.url.includes(`user=${encodeURIComponent(UID)}`))
             .map((r) => c.delete(r)));
         }));
       } catch (e) {
@@ -459,7 +475,7 @@
 
     async function loadSpeakers() {
       try {
-        const res = await fetch('/api/speakers');
+        const res = await fetch(withUser('/api/speakers'));
         if (!res.ok) return;
         const data = await readJson(res);
         if (!res.ok || !Array.isArray(data.speakers)) return;
@@ -579,7 +595,7 @@
       if (btn) btn.classList.add('loading');
 
       const presetId = currentLang === 'hi' ? `${presetKey}_hi` : (currentLang === 'bn' ? `${presetKey}_bn` : presetKey);
-      const url = `/api/presets/${presetId}?speaker=${encodeURIComponent(currentSpeaker)}`;
+      const url = withUser(`/api/presets/${presetId}?speaker=${encodeURIComponent(currentSpeaker)}`);
 
       try {
         const res = await fetch(url);
@@ -592,7 +608,7 @@
           URL.revokeObjectURL(lastBlobUrl); // Memory leak prevention
         }
         lastBlobUrl = URL.createObjectURL(blob);
-        setDownload({ preset_id: presetId, speaker: currentSpeaker }, `amar-voice-${presetId}-${currentSpeaker}.mp3`);
+        setDownload({ preset_id: presetId, speaker: currentSpeaker, user: UID }, `amar-voice-${presetId}-${currentSpeaker}.mp3`);
         if (btn) {
           btn.classList.remove('loading');
           btn.classList.add('playing');
@@ -627,7 +643,8 @@
           body: JSON.stringify({
             text: text,
             language: currentLang,
-            speaker: currentSpeaker
+            speaker: currentSpeaker,
+            user: UID
           })
         });
 
@@ -642,7 +659,7 @@
         }
         lastBlobUrl = URL.createObjectURL(blob);
         const customText = text;
-        setDownload({ text: customText, language: currentLang, speaker: currentSpeaker }, `amar-voice-custom-${currentSpeaker}-${currentLang}.mp3`);
+        setDownload({ text: customText, language: currentLang, speaker: currentSpeaker, user: UID }, `amar-voice-custom-${currentSpeaker}-${currentLang}.mp3`);
         playAudio(lastBlobUrl);
       } catch (err) {
         showToast(`Error: ${err.message}`);
@@ -672,7 +689,7 @@
         const res = await fetch('/api/voices/rename', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ old_name: spk, new_name: newName })
+          body: JSON.stringify({ old_name: spk, new_name: newName, user: UID })
         });
         const data = await readJson(res);
         if (!res.ok) throw new Error(data.detail || `Rename failed (${res.status})`);
@@ -694,7 +711,7 @@
       if (!confirm(`Delete voice profile '${spk}'? This removes its clone, saved audio, and uploaded clips.`)) return;
       try {
         showToast(`Deleting '${spk}'...`);
-        const res = await fetch(`/api/voices/${encodeURIComponent(spk)}`, { method: 'DELETE' });
+        const res = await fetch(withUser(`/api/voices/${encodeURIComponent(spk)}`), { method: 'DELETE' });
         const data = await readJson(res);
         if (!res.ok) throw new Error(data.detail || `Delete failed (${res.status})`);
         if (currentSpeaker === spk) currentSpeaker = 'default';
@@ -731,7 +748,7 @@
       try {
         showToast(`Uploading ${fileInput.files.length} clip(s)...`);
         setBusy(true, 'Uploading...');
-        const res = await fetch(`/api/upload-voice?speaker_name=${encodeURIComponent(spkName)}`, {
+        const res = await fetch(withUser(`/api/upload-voice?speaker_name=${encodeURIComponent(spkName)}`), {
           method: 'POST',
           body: formData
         });
@@ -746,7 +763,7 @@
           await new Promise(r => setTimeout(r, 2500));
           let st;
           try {
-            const stRes = await fetch(`/api/voice-status?speaker=${encodeURIComponent(spkName)}`);
+            const stRes = await fetch(withUser(`/api/voice-status?speaker=${encodeURIComponent(spkName)}`));
             if (!stRes.ok) throw new Error(`status ${stRes.status}`);
             st = await readJson(stRes);
           } catch (e) {

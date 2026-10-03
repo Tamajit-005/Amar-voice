@@ -1,4 +1,4 @@
-const CACHE_NAME = 'amar-voice-v3';
+const CACHE_NAME = 'amar-voice-v4';
 const SHELL_FILES = [
   '/',
   '/manifest.json'

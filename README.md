@@ -32,7 +32,9 @@ menu, zero settings pages.
 Each person gets a profile (e.g. `demo`): a few 10–25s voice notes in any language.
 The backend clones the voice once via ElevenLabs v4 Instant Voice Cloning and reuses
 that voice ID everywhere — so the same person speaks English, Hindi, and Bengali
-with their own timbre and native accents. Uploading more clips under the same name
+with their own timbre and native accents. Each phone gets its own private space
+(a random ID kept in that browser only): voices you add are visible on your device
+alone, while `default` is shared by everyone. Uploading more clips under the same name
 re-clones from the full set; renaming keeps the same voice ID; deleting removes the
 clone, mapping, cached audio, and clips. `default` is pinned to one
 `ELEVENLABS_DEFAULT_VOICE_ID` voice and can't be renamed, deleted, or overwritten.
