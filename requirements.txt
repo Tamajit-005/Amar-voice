@@ -1,0 +1,5 @@
+fastapi>=0.110.0,<1.0.0
+uvicorn>=0.28.0,<1.0.0
+pydantic>=2.6.0,<3.0.0
+python-multipart>=0.0.9,<1.0.0
+pydub>=0.25.1,<1.0.0

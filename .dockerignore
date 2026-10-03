@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.pyc
+.env
+.env.local
+.git/
+outputs/
+tmp_outputs/
+tmp_downloads/
+processed/
+.vscode/

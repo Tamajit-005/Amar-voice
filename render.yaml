@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: amar-voice
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: ELEVENLABS_DEFAULT_VOICE_ID
+        sync: false
+      - key: ELEVENLABS_MODEL_ID
+        value: eleven_v4

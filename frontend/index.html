@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="Assistive Voice Communicator for Elderly Family Members">
+  <link rel="manifest" href="/manifest.json">
+  <title>Amar Voice — A Voice That Stays Theirs</title>
+  
+  <style>
+    /* High contrast, resilient offline styles without mandatory CDN */
+    :root {
+      --bg: #020617;
+      --card-bg: #0f172a;
+      --border: #1e293b;
+      --amber: #fbbf24;
+      --amber-hover: #f59e0b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+    }
+    header {
+      width: 100%;
+      max-width: 500px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--amber);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .pill-group {
+      display: flex;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+    }
+    .pill-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .pill-btn.active {
+      background: var(--amber);
+      color: #020617;
+    }
+    .speaker-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+    /* Bigger devices: speaker menu docks to the right, compact */
+    @media (min-width: 640px) {
+      .speaker-bar {
+        align-self: flex-end;
+        width: auto;
+        min-width: 240px;
+        gap: 10px;
+      }
+    }
+    /* Small phones: tighter, smaller speaker menu */
+    @media (max-width: 639px) {
+      .speaker-bar {
+        font-size: 12px;
+        padding: 4px 8px;
+      }
+      select {
+        font-size: 12px;
+        max-width: 140px;
+      }
+    }
+    select {
+      background: #020617;
+      color: var(--amber);
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      outline: none;
+    }
+    /* Grid Cards */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 500px;
+      margin: 16px 0;
+    }
+    .card-btn {
+      position: relative;
+      min-height: 110px;
+      border-radius: 16px;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      color: white;
+      font-weight: 800;
+      font-size: 18px;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.1s;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+    .card-btn:active {
+      transform: scale(0.96);
+    }
+    .card-btn.playing {
+      outline: 3px solid var(--amber);
+    }
+    .card-btn.loading {
+      opacity: 0.55;
+      pointer-events: none;
+    }
+    .card-btn.loading::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.35);
+      border-top-color: #fff;
+      animation: spin 0.7s linear infinite;
+    }
+    /* Reusable circular spinner: follows text color, works on any button */
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      margin-right: 6px;
+      vertical-align: -2px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      opacity: 0.9;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .card-icon {
+      font-size: 32px;
+      margin-bottom: 4px;
+    }
+    .card-subtext {
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 4px;
+      opacity: 0.85;
+    }
+    .btn-water { background: #0284c7; }
+    .btn-med { background: #059669; }
+    .btn-call { background: #4f46e5; }
+    .btn-tea { background: #d97706; }
+    .btn-fine { background: #0d9488; }
+    .btn-help { background: #e11d48; }
+
+    /* Custom Text Section */
+    .custom-box {
+      width: 100%;
+      max-width: 500px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .custom-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 85px;
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: white;
+      padding: 12px;
+      font-size: 16px;
+      font-family: inherit;
+      resize: vertical;
+      outline: none;
+    }
+    textarea:focus {
+      border-color: var(--amber);
+    }
+    .speak-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--amber);
+      color: #020617;
+      font-size: 17px;
+      font-weight: 900;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s;
+    }
+    .speak-btn:hover { background: var(--amber-hover); }
+    .speak-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    /* Toast notifications */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      background: #334155;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      display: none;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+      z-index: 100;
+    }
+    /* Drawer */
+    footer {
+      width: 100%;
+      max-width: 500px;
+      margin-top: 12px;
+      text-align: center;
+    }
+    details {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    summary {
+      cursor: pointer;
+      padding: 6px;
+    }
+    .drawer-content {
+      margin-top: 8px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      text-align: left;
+    }
+    input[type="text"], input[type="file"] {
+      width: 100%;
+      padding: 8px;
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: white;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-row">
+      <div>
+        <h1><span>🎙️</span> Amar Voice</h1>
+        <p class="subtitle">A voice that stays theirs</p>
+      </div>
+      <div class="pill-group">
+        <button id="langEnBtn" class="pill-btn active" onclick="setLanguage('en')">English</button>
+        <button id="langHiBtn" class="pill-btn" onclick="setLanguage('hi')">हिंदी</button>
+        <button id="langBnBtn" class="pill-btn" onclick="setLanguage('bn')">বাংলা</button>
+      </div>
+    </div>
+    
+    <div class="speaker-bar">
+      <span>👤 Speaking As:</span>
+      <div style="display: flex; gap: 6px; align-items: center;">
+        <select id="speakerSelect" onchange="onSpeakerChange()">
+          <option value="default">Default Voice</option>
+        </select>
+        <button id="headerRenameBtn" title="Rename this voice" onclick="renameVoice(document.getElementById('speakerSelect').value)" style="background: transparent; border: 1px solid var(--border); color: var(--amber); border-radius: 6px; font-size: 13px; padding: 4px 9px; cursor: pointer;">✏️</button>
+        <button id="headerDeleteBtn" title="Delete this voice" onclick="deleteVoice()" style="background: transparent; border: 1px solid #7f1d1d; color: #f87171; border-radius: 6px; font-size: 13px; padding: 4px 9px; cursor: pointer;">✕</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Big Tactile Quick Cards -->
+  <main class="grid">
+    <button id="btn-water" class="card-btn btn-water" onclick="playPreset('water')">
+      <span class="card-icon">💧</span>
+      <span>Need Water</span>
+      <span class="card-subtext" lang="bn">জল খাব • <span lang="hi">पानी चाहिए</span></span>
+    </button>
+
+    <button id="btn-medicine" class="card-btn btn-med" onclick="playPreset('medicine')">
+      <span class="card-icon">💊</span>
+      <span>Medicine Time</span>
+      <span class="card-subtext" lang="bn">ওষুধের সময় • <span lang="hi">दवाई</span></span>
+    </button>
+
+    <button id="btn-call" class="card-btn btn-call" onclick="playPreset('call')">
+      <span class="card-icon">📞</span>
+      <span>Call Relative</span>
+      <span class="card-subtext" lang="bn">অনিকেতকে ডাকো • <span lang="hi">बुलाओ</span></span>
+    </button>
+
+    <button id="btn-tea" class="card-btn btn-tea" onclick="playPreset('tea')">
+      <span class="card-icon">☕</span>
+      <span>Want Tea</span>
+      <span class="card-subtext" lang="bn">চা খাব • <span lang="hi">चाय चाहिए</span></span>
+    </button>
+
+    <button id="btn-fine" class="card-btn btn-fine" onclick="playPreset('fine')">
+      <span class="card-icon">😊</span>
+      <span>I Am Fine</span>
+      <span class="card-subtext" lang="bn">আমি ঠিক আছি • <span lang="hi">मैं ठीक हूँ</span></span>
+    </button>
+
+    <button id="btn-help" class="card-btn btn-help" onclick="playPreset('help')">
+      <span class="card-icon">🚨</span>
+      <span>Need Help</span>
+      <span class="card-subtext" lang="bn">সাহায্য চাই • <span lang="hi">मदद चाहिए</span></span>
+    </button>
+  </main>
+
+  <!-- Custom Speech Message Input -->
+  <section class="custom-box">
+    <div class="custom-header">
+      <span>Custom Message</span>
+    </div>
+
+    <textarea id="customText" maxlength="1000" placeholder="Type what you want to say in your voice..."></textarea>
+    
+    <button id="speakCustomBtn" class="speak-btn" onclick="speakCustom()">
+      <span>🗣️</span> <span id="speakBtnText">Speak in My Voice</span>
+    </button>
+    <button id="downloadBtn" class="speak-btn" style="display: none; background: var(--card-bg); color: var(--amber); border: 1px solid var(--border);" onclick="downloadAudio()">
+      <span>⬇️</span> <span id="downloadBtnText">Download Voice (MP3)</span>
+    </button>
+  </section>
+
+  <!-- Audio Profile Manager -->
+  <footer>
+    <details>
+      <summary>⚙️ Add Voice Profiles (WhatsApp Voice Notes)</summary>
+      <div class="drawer-content">
+        <p style="font-size: 12px; color: var(--text-muted);">Upload 1 or more voice notes (10–25s clip, same person). Same name = clips join that voice:</p>
+        <input id="newSpeakerName" type="text" placeholder="Profile name (default voice is fixed)" />
+        <input id="voiceFileInput" type="file" accept="audio/*" multiple />
+        <button id="saveProfileBtn" class="speak-btn" style="padding: 8px; font-size: 14px;" onclick="uploadVoice()">Save Profile</button>
+        <button id="deleteProfileBtn" class="speak-btn" style="padding: 8px; font-size: 14px; background: transparent; color: #f87171; border: 1px solid #7f1d1d;" onclick="deleteVoice()">Delete Selected Profile</button>
+        <div id="profileList" style="display: flex; flex-direction: column; gap: 6px;"></div>
+        <p id="cloneStatus" style="font-size: 12px; color: var(--text-muted); display: none;"></p>
+      </div>
+    </details>
+  </footer>
+
+  <div id="toast"></div>
+  <audio id="audioPlayer" preload="auto" style="display: none;"></audio>
+
+  <script>
+    let currentLang = 'en';
+    let currentSpeaker = 'default';
+    let lastBlobUrl = null;
+
+    // Register Service Worker for true offline PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration note:', err));
+    }
+
+    async function readJson(res) {
+      try {
+        return await res.json();
+      } catch {
+        return {};
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 3500);
+    }
+
+    async function purgePresetCache(speaker) {
+      // Drop stale/deleted voice audio so taps always fetch the fresh clone
+      try {
+        if (!('caches' in window)) return;
+        const names = await caches.keys();
+        await Promise.all(names.map(async (n) => {
+          const c = await caches.open(n);
+          const keys = await c.keys();
+          await Promise.all(keys
+            .filter((r) => r.url.includes('/api/presets/') && r.url.includes(`speaker=${encodeURIComponent(speaker)}`))
+            .map((r) => c.delete(r)));
+        }));
+      } catch (e) {
+        console.log('Cache purge note:', e);
+      }
+    }
+
+    async function loadSpeakers() {
+      try {
+        const res = await fetch('/api/speakers');
+        if (!res.ok) return;
+        const data = await readJson(res);
+        if (!res.ok || !Array.isArray(data.speakers)) return;
+        const select = document.getElementById('speakerSelect');
+        select.innerHTML = '';
+        data.speakers.forEach(spk => {
+          const opt = document.createElement('option');
+          opt.value = spk;
+          opt.innerText = spk.charAt(0).toUpperCase() + spk.slice(1);
+          if (spk === currentSpeaker) opt.selected = true;
+          select.appendChild(opt);
+        });
+        // Per-profile delete list: every voice removable in one tap
+        const list = document.getElementById('profileList');
+        list.innerHTML = '';
+        data.speakers.forEach(spk => {
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;background:#020617;border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;';
+          const name = document.createElement('span');
+          name.innerText = (spk.charAt(0).toUpperCase() + spk.slice(1)) + (spk === currentSpeaker ? ' ✓' : '');
+          const del = document.createElement('button');
+          del.innerText = '✕ Delete';
+          del.style.cssText = 'background:transparent;border:1px solid #7f1d1d;color:#f87171;border-radius:6px;font-size:12px;padding:4px 10px;cursor:pointer;';
+          del.onclick = () => deleteVoiceByName(spk);
+          row.appendChild(name);
+          if (spk === 'default') {
+            const lock = document.createElement('span');
+            lock.innerText = '🔒 default';
+            lock.style.cssText = 'font-size: 12px; color: var(--text-muted);';
+            row.appendChild(lock);
+          } else {
+            const actions = document.createElement('div');
+            actions.style.cssText = 'display: flex; gap: 6px;';
+            const ren = document.createElement('button');
+            ren.innerText = '✏️';
+            ren.title = `Rename '${spk}'`;
+            ren.style.cssText = 'background:transparent;border:1px solid var(--border);color:var(--amber);border-radius:6px;font-size:12px;padding:4px 10px;cursor:pointer;';
+            ren.onclick = () => renameVoice(spk);
+            actions.appendChild(ren);
+            actions.appendChild(del);
+            row.appendChild(actions);
+          }
+          list.appendChild(row);
+        });
+      } catch (err) {
+        console.log('Speakers loading note:', err);
+      }
+    }
+    loadSpeakers();
+
+    function onSpeakerChange() {
+      currentSpeaker = document.getElementById('speakerSelect').value;
+      showToast(`Speaker changed to ${currentSpeaker}`);
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.getElementById('langEnBtn').className = 'pill-btn ' + (lang === 'en' ? 'active' : '');
+      document.getElementById('langHiBtn').className = 'pill-btn ' + (lang === 'hi' ? 'active' : '');
+      document.getElementById('langBnBtn').className = 'pill-btn ' + (lang === 'bn' ? 'active' : '');
+      showToast(lang === 'en' ? 'Switched to English' : (lang === 'hi' ? 'हिंदी पर स्विच किया' : 'বাংলায় বদলানো হয়েছে'));
+    }
+
+    let lastDownload = null;
+
+    function setDownload(ctx, filename) {
+      lastDownload = { ...ctx, filename };
+      document.getElementById('downloadBtn').style.display = 'flex';
+    }
+
+    async function downloadAudio() {
+      if (!lastDownload) return;
+      const btnText = document.getElementById('downloadBtnText');
+      btnText.innerHTML = '<span class="spinner"></span>Preparing MP3...';
+      try {
+        const { filename, ...body } = lastDownload;
+        const res = await fetch('/api/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (!res.ok) {
+          const errData = await readJson(res);
+          throw new Error(errData.detail || `Download failed (${res.status})`);
+        }
+        const blob = await res.blob();
+        if (blob.size > 350 * 1024) {
+          throw new Error('File exceeds 350 KB');
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename || 'amar-voice.mp3';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        showToast(`Downloaded (${(blob.size / 1024).toFixed(0)} KB MP3)`);
+      } catch (err) {
+        showToast(`Download failed: ${err.message}`);
+      } finally {
+        btnText.innerText = 'Download Voice (MP3)';
+      }
+    }
+
+    function playAudio(url) {
+      const player = document.getElementById('audioPlayer');
+      player.src = url;
+      player.play().catch(e => {
+        showToast('Tap again to enable audio playback');
+      });
+    }
+
+    async function playPreset(presetKey) {
+      const btn = document.getElementById(`btn-${presetKey}`);
+      if (btn && btn.classList.contains('loading')) return; // ignore double taps
+      if (btn) btn.classList.add('loading');
+
+      const presetId = currentLang === 'hi' ? `${presetKey}_hi` : (currentLang === 'bn' ? `${presetKey}_bn` : presetKey);
+      const url = `/api/presets/${presetId}?speaker=${encodeURIComponent(currentSpeaker)}`;
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) {
+          const errData = await readJson(res);
+          throw new Error(errData.detail || `Preset failed (${res.status})`);
+        }
+        const blob = await res.blob();
+        if (lastBlobUrl) {
+          URL.revokeObjectURL(lastBlobUrl); // Memory leak prevention
+        }
+        lastBlobUrl = URL.createObjectURL(blob);
+        setDownload({ preset_id: presetId, speaker: currentSpeaker }, `amar-voice-${presetId}-${currentSpeaker}.mp3`);
+        if (btn) {
+          btn.classList.remove('loading');
+          btn.classList.add('playing');
+        }
+        playAudio(lastBlobUrl);
+      } catch (e) {
+        showToast(`Preset playback failed: ${e.message}`);
+        if (btn) btn.classList.remove('loading');
+      } finally {
+        setTimeout(() => { if (btn) btn.classList.remove('playing'); }, 1500);
+      }
+    }
+
+    async function speakCustom() {
+      const textarea = document.getElementById('customText');
+      const text = textarea.value.trim();
+      if (!text) {
+        showToast('Please type a message first');
+        return;
+      }
+
+      const btn = document.getElementById('speakCustomBtn');
+      const btnText = document.getElementById('speakBtnText');
+      
+      btn.disabled = true;
+      btnText.innerHTML = '<span class="spinner"></span>Generating Voice...';
+
+      try {
+        const res = await fetch('/api/speak', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: text,
+            language: currentLang,
+            speaker: currentSpeaker
+          })
+        });
+
+        if (!res.ok) {
+          const errData = await readJson(res);
+          throw new Error(errData.detail || `Voice generation failed (${res.status})`);
+        }
+
+        const blob = await res.blob();
+        if (lastBlobUrl) {
+          URL.revokeObjectURL(lastBlobUrl); // Memory leak prevention
+        }
+        lastBlobUrl = URL.createObjectURL(blob);
+        const customText = text;
+        setDownload({ text: customText, language: currentLang, speaker: currentSpeaker }, `amar-voice-custom-${currentSpeaker}-${currentLang}.mp3`);
+        playAudio(lastBlobUrl);
+      } catch (err) {
+        showToast(`Error: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btnText.innerText = 'Speak in My Voice';
+      }
+    }
+
+    async function deleteVoice() {
+      const spk = document.getElementById('speakerSelect').value;
+      if (spk) deleteVoiceByName(spk);
+    }
+
+    async function renameVoice(spk) {
+      if (!spk) return;
+      if (spk === 'default') {
+        showToast('The default voice cannot be renamed');
+        return;
+      }
+      const next = prompt(`Rename voice '${spk}' to:`, spk);
+      if (next === null) return;
+      const newName = next.trim();
+      if (!newName || newName === spk) return;
+      try {
+        showToast(`Renaming '${spk}'...`);
+        const res = await fetch('/api/voices/rename', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ old_name: spk, new_name: newName })
+        });
+        const data = await readJson(res);
+        if (!res.ok) throw new Error(data.detail || `Rename failed (${res.status})`);
+        await purgePresetCache(spk);
+        if (currentSpeaker === spk) currentSpeaker = data.new;
+        await loadSpeakers();
+        showToast(`Renamed to '${data.new}' — same voice, new name`);
+      } catch (err) {
+        showToast(`Rename failed: ${err.message}`);
+      }
+    }
+
+    async function deleteVoiceByName(spk) {
+      if (!spk) return;
+      if (spk === 'default') {
+        showToast('The default voice cannot be deleted');
+        return;
+      }
+      if (!confirm(`Delete voice profile '${spk}'? This removes its clone, saved audio, and uploaded clips.`)) return;
+      try {
+        showToast(`Deleting '${spk}'...`);
+        const res = await fetch(`/api/voices/${encodeURIComponent(spk)}`, { method: 'DELETE' });
+        const data = await readJson(res);
+        if (!res.ok) throw new Error(data.detail || `Delete failed (${res.status})`);
+        if (currentSpeaker === spk) currentSpeaker = 'default';
+        await purgePresetCache(spk);
+        await loadSpeakers();
+        showToast(`Profile '${spk}' deleted`);
+      } catch (err) {
+        showToast(`Delete failed: ${err.message}`);
+      }
+    }
+
+    async function uploadVoice() {
+      const fileInput = document.getElementById('voiceFileInput');
+      const nameInput = document.getElementById('newSpeakerName');
+      const saveBtn = document.getElementById('saveProfileBtn');
+      const statusEl = document.getElementById('cloneStatus');
+      const spkName = nameInput.value.trim() || 'default';
+
+      if (!fileInput.files.length) {
+        showToast('Please select an audio file');
+        return;
+      }
+
+      const formData = new FormData();
+      for (const f of fileInput.files) {
+        formData.append('files', f);
+      }
+
+      const setBusy = (busy, label) => {
+        saveBtn.disabled = busy;
+        saveBtn.innerHTML = busy ? `<span class="spinner"></span>${label}` : label;
+      };
+
+      try {
+        showToast(`Uploading ${fileInput.files.length} clip(s)...`);
+        setBusy(true, 'Uploading...');
+        const res = await fetch(`/api/upload-voice?speaker_name=${encodeURIComponent(spkName)}`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await readJson(res);
+        if (!res.ok) {
+          throw new Error(data.detail || `Upload failed (${res.status})`);
+        }
+        // Lazy loader: cloning + 18 presets build in background — poll until ready
+        statusEl.style.display = 'block';
+        const started = Date.now();
+        while (Date.now() - started < 5 * 60 * 1000) {
+          await new Promise(r => setTimeout(r, 2500));
+          let st;
+          try {
+            const stRes = await fetch(`/api/voice-status?speaker=${encodeURIComponent(spkName)}`);
+            if (!stRes.ok) throw new Error(`status ${stRes.status}`);
+            st = await readJson(stRes);
+          } catch (e) {
+            throw new Error(`Lost contact with server: ${e.message}`);
+          }
+          if (st.state === 'ready' || (st.state === 'idle' && Date.now() - started > 10000)) {
+            statusEl.style.display = 'none';
+            await purgePresetCache(spkName);
+            showToast(`Profile '${spkName}' ready in your voice!`);
+            currentSpeaker = spkName;
+            await loadSpeakers();
+            fileInput.value = '';
+            nameInput.value = '';
+            setBusy(false, 'Save Profile');
+            return;
+          }
+          if (st.state === 'error') {
+            throw new Error(st.detail || 'Voice cloning failed');
+          }
+          const pct = st.total ? ` ${st.done}/${st.total}` : '';
+          setBusy(true, `Cloning voice${pct}...`);
+          statusEl.innerText = `Cloning '${spkName}'${pct ? ` — preset${pct}` : ''}. Keep this page open.`;
+        }
+        throw new Error('Timed out waiting for voice — try again in a minute');
+      } catch (err) {
+        showToast(`Upload failed: ${err.message}`);
+        setBusy(false, 'Save Profile');
+      }
+    }
+  </script>
+</body>
+</html>
