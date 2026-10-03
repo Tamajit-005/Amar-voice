@@ -53,15 +53,10 @@ processed/
 temp_base_*.wav
 latest_speech_*.wav
 assets/raw_*
-# Voice data: ignore everything except the demo voice (keep this name in sync
-# if the demo profile is renamed — only one demo voice ships in git)
+# Voice data: all voice clips, voice-ID map, and preset audio stay out of git.
+# (Upload voices at runtime; presets regenerate automatically.)
 assets/voices/*
-!assets/voices/demo/
-!assets/voices/demo/*.ogg
-!assets/voices/demo/*.wav
 backend/static_presets/*
-!backend/static_presets/demo/
-!backend/static_presets/demo/*.wav
 
 # IDE and OS
 PLAN.md
