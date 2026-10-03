@@ -4,10 +4,10 @@
 
 When speaking gets exhausting, even asking for water becomes hard. Amar Voice is a
 big-button phone app built for anyone with vocal fatigue or voice loss: they tap a
-☕ tea, 😊 I'm fine, 🚨 help — and the phone speaks **in their own cloned voice**.
-Anything else can be typed into the custom-message box. It installs like an app,
-works offline for the everyday phrases, and lets the family add, rename, or remove
-voice profiles from the phone itself.
+card — 💧 water, 💊 medicine, 📞 call, ☕ tea, 😊 I'm fine, 🚨 help — and the phone
+speaks **in their own cloned voice**. Anything else can be typed into the
+custom-message box. It installs like an app, works offline for the everyday phrases,
+and lets the family add, rename, or remove voice profiles from the phone itself.
 
 ## Who it's for
 
@@ -29,20 +29,35 @@ menu, zero settings pages.
 
 ## How the voices work
 
-Each person gets a profile (e.g. `demo`): a few 10–25s voice notes in any language.
-The backend clones the voice once via ElevenLabs v4 Instant Voice Cloning and reuses
-that voice ID everywhere — so the same person speaks English, Hindi, and Bengali
-with their own timbre and native accents. Each phone gets its own private space
-(a random ID kept in that browser only): voices you add are visible on your device
-alone, while `default` is shared by everyone. Uploading more clips under the same name
-re-clones from the full set; renaming keeps the same voice ID; deleting removes the
-clone, mapping, cached audio, and clips. `default` is pinned to one
+Each person gets a profile (any name you like): a few 10–25s voice notes in any
+language. The backend clones the voice once via ElevenLabs v4 Instant Voice Cloning
+and reuses that voice ID everywhere — so the same person speaks English, Hindi, and
+Bengali with their own timbre and native accents. Each phone gets its own private
+space (a random ID kept in that browser only): voices you add are visible on your
+device alone, while `default` is shared by everyone. Uploading more clips under the
+same name re-clones from the full set; renaming keeps the same voice ID; deleting
+removes the clone, mapping, cached audio, and clips. `default` is pinned to one
 `ELEVENLABS_DEFAULT_VOICE_ID` voice and can't be renamed, deleted, or overwritten.
 
 Under the hood: FastAPI backend (`backend/main.py` routes, `backend/engine.py`
 voice management, `backend/eleven.py` API client), single-file PWA frontend with a
 service worker, per-IP rate limits on the paid endpoints, atomic cache writes so
 concurrent taps never serve half-written audio.
+
+## Where the voices actually live
+
+Two stores, and they behave differently:
+
+- **On the phone** — a random device ID in the browser's `localStorage` (`amar_uid`),
+  plus the service-worker audio cache. Neither is touched by a server restart, but
+  clearing site data for the app wipes the ID, which starts a fresh empty space.
+- **On the server** — the uploaded clips, the speaker→voice-ID map, and the 18
+  generated presets per speaker, namespaced under that device ID
+  (`assets/voices/<device-id>/…`, `backend/static_presets/<device-id>/…`).
+  On your own machine that disk is permanent; on Render's free tier it is ephemeral,
+  so any restart or redeploy clears the voices (the phone keeps its ID and just sees
+  `default` until you re-upload). Persistent hosting needs a paid disk or an
+  external store — the tradeoff of account-free per-device spaces.
 
 ## Honest trade-offs
 
@@ -52,8 +67,9 @@ concurrent taps never serve half-written audio.
 - **It costs characters.** Every new sentence is a paid API call (free tier +
   Hacktoberfest promo credits cover demo use). Rate limits and 18-preset batching
   keep accidents small.
-- **Voice data leaves the device.** Only the `demo` voice ships in git; every other
-  profile is gitignored, and the API key lives in server-side `.env` only.
+- **Voice data leaves the device.** No voice ships in git: every uploaded clip, the
+  voice-ID map, and all preset audio are gitignored and generated at runtime. The
+  API key lives in server-side `.env` only.
 
 ## Run it yourself
 
