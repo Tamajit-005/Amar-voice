@@ -1,7 +1,9 @@
-const CACHE_NAME = 'amar-voice-v4';
+const CACHE_NAME = 'amar-voice-v5';
 const SHELL_FILES = [
   '/',
-  '/manifest.json'
+  '/manifest.json',
+  '/icon.png',
+  '/icon-192.png'
 ];
 
 self.addEventListener('install', (e) => {

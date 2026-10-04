@@ -387,7 +387,7 @@ async def upload_voice(
             if ext not in [".wav", ".mp3", ".m4a", ".opus", ".ogg"]:
                 raise HTTPException(status_code=400, detail=f"Unsupported audio format in '{orig_name}'. Please upload .wav, .mp3, .m4a, .opus, or .ogg.")
 
-            # Cap each clip at 800 KB (free-tier disk/RAM; 6 clips = 4.8 MB max).
+            # Cap each clip at 800 KB (free-tier disk/RAM; 8 clips = 6.4 MB max).
             # Compressed phone recordings (m4a/mp3/opus) fit minutes in this;
             # uncompressed WAV over ~18s will not — send compressed audio.
             MAX_BYTES = 800 * 1024
@@ -485,6 +485,14 @@ def get_icon_192():
     if os.path.exists(icon_path):
         return FileResponse(icon_path, media_type="image/png")
     raise HTTPException(status_code=404, detail="icon-192.png not found")
+
+@app.get("/favicon.ico")
+def get_favicon():
+    # Browsers auto-request /favicon.ico; serve the 192px logo instead of 404.
+    icon_path = os.path.join(REPO_ROOT, "frontend", "icon-192.png")
+    if os.path.exists(icon_path):
+        return FileResponse(icon_path, media_type="image/png")
+    raise HTTPException(status_code=404, detail="favicon not found")
 
 @app.get("/")
 def index():
