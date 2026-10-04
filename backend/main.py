@@ -365,8 +365,8 @@ async def upload_voice(
     uploads = [f for f in [file, *(files or [])] if f is not None]
     if not uploads:
         raise HTTPException(status_code=400, detail="Please select at least one audio file.")
-    if len(uploads) > 6:
-        raise HTTPException(status_code=400, detail="Maximum 6 clips per upload.")
+    if len(uploads) > 8:
+        raise HTTPException(status_code=400, detail="Maximum 8 clips per upload.")
 
     safe_speaker = sanitize_identifier(speaker_name)
     if safe_speaker == "default":
