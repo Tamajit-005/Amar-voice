@@ -30,7 +30,8 @@ menu, zero settings pages.
 ## How the voices work
 
 Each person gets a profile (any name you like): a few 10–25s voice notes in any
-language. The backend clones the voice once via ElevenLabs v4 Instant Voice Cloning
+language (max 6 clips per upload; each clip max 800 KB and 2 minutes —
+compressed phone recordings fit easily, uncompressed WAV over ~18s does not). The backend clones the voice once via ElevenLabs v4 Instant Voice Cloning
 and reuses that voice ID everywhere — so the same person speaks English, Hindi, and
 Bengali with their own timbre and native accents. Each phone gets its own private
 space (a random ID kept in that browser only): voices you add are visible on your

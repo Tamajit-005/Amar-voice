@@ -365,8 +365,8 @@ async def upload_voice(
     uploads = [f for f in [file, *(files or [])] if f is not None]
     if not uploads:
         raise HTTPException(status_code=400, detail="Please select at least one audio file.")
-    if len(uploads) > 8:
-        raise HTTPException(status_code=400, detail="Maximum 8 clips per upload.")
+    if len(uploads) > 6:
+        raise HTTPException(status_code=400, detail="Maximum 6 clips per upload.")
 
     safe_speaker = sanitize_identifier(speaker_name)
     if safe_speaker == "default":
@@ -387,11 +387,13 @@ async def upload_voice(
             if ext not in [".wav", ".mp3", ".m4a", ".opus", ".ogg"]:
                 raise HTTPException(status_code=400, detail=f"Unsupported audio format in '{orig_name}'. Please upload .wav, .mp3, .m4a, .opus, or .ogg.")
 
-            # Cap each clip at 15 MB to prevent memory exhaustion DoS
-            MAX_BYTES = 15 * 1024 * 1024
+            # Cap each clip at 800 KB (free-tier disk/RAM; 6 clips = 4.8 MB max).
+            # Compressed phone recordings (m4a/mp3/opus) fit minutes in this;
+            # uncompressed WAV over ~18s will not — send compressed audio.
+            MAX_BYTES = 800 * 1024
             content = await upload.read(MAX_BYTES + 1)
             if len(content) > MAX_BYTES:
-                raise HTTPException(status_code=413, detail=f"'{orig_name}' is too large. Maximum size is 15 MB per clip.")
+                raise HTTPException(status_code=413, detail=f"'{orig_name}' is too large. Maximum size is 800 KB per clip.")
 
             # Unique-ify so distinct originals never silently overwrite each other
             stem, counter = safe_filename, 0
