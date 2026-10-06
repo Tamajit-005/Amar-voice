@@ -32,7 +32,7 @@ menu, zero settings pages.
 ### Profiles
 - Each person gets a profile under any name you like, built from a few
   10–25s voice notes in any language.
-- Limits per upload: max 8 clips, each max 800 KB and 2 minutes.
+- Limits per upload: max 10 clips, each max 800 KB and 2 minutes.
   Compressed phone recordings (m4a/mp3/opus) fit minutes easily;
   uncompressed WAV tops out around ~18s.
 

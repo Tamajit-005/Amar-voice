@@ -21,7 +21,7 @@ def test_engine_synthesize_c1_and_c2():
         
     try:
         # 2. Verify C2 fix: long sentence with multiple clauses/punctuation
-        long_text = "I need some water please. Also please call Aniket. The weather is getting cooler and I want some warm tea."
+        long_text = "I need some water please. Also please call my family member. The weather is getting cooler and I want some warm tea."
         res = engine.synthesize(text=long_text, lang="en", speaker="default", out_path=out_path)
         assert os.path.exists(res), "Synthesized file must exist"
         assert os.path.getsize(res) > 10000, "Synthesized audio must not be empty or truncated"

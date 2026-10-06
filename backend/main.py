@@ -365,8 +365,8 @@ async def upload_voice(
     uploads = [f for f in [file, *(files or [])] if f is not None]
     if not uploads:
         raise HTTPException(status_code=400, detail="Please select at least one audio file.")
-    if len(uploads) > 8:
-        raise HTTPException(status_code=400, detail="Maximum 8 clips per upload.")
+    if len(uploads) > 10:
+        raise HTTPException(status_code=400, detail="Maximum 10 clips per upload.")
 
     safe_speaker = sanitize_identifier(speaker_name)
     if safe_speaker == "default":
@@ -387,7 +387,7 @@ async def upload_voice(
             if ext not in [".wav", ".mp3", ".m4a", ".opus", ".ogg"]:
                 raise HTTPException(status_code=400, detail=f"Unsupported audio format in '{orig_name}'. Please upload .wav, .mp3, .m4a, .opus, or .ogg.")
 
-            # Cap each clip at 800 KB (free-tier disk/RAM; 8 clips = 6.4 MB max).
+            # Cap each clip at 800 KB (free-tier disk/RAM; 10 clips = 8.0 MB max).
             # Compressed phone recordings (m4a/mp3/opus) fit minutes in this;
             # uncompressed WAV over ~18s will not — send compressed audio.
             MAX_BYTES = 800 * 1024

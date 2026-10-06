@@ -361,7 +361,7 @@
     <button id="btn-call" class="card-btn btn-call" onclick="playPreset('call')">
       <span class="card-icon">📞</span>
       <span>Call Relative</span>
-      <span class="card-subtext" lang="bn">অনিকেতকে ডাকো • <span lang="hi">बुलाओ</span></span>
+      <span class="card-subtext" lang="bn">পরিবারকে ডাকো • <span lang="hi">परिवार को बुलाओ</span></span>
     </button>
 
     <button id="btn-tea" class="card-btn btn-tea" onclick="playPreset('tea')">
@@ -404,7 +404,7 @@
     <details>
       <summary>⚙️ Add Voice Profiles (WhatsApp Voice Notes)</summary>
       <div class="drawer-content">
-        <p style="font-size: 12px; color: var(--text-muted);">Upload 1–8 voice notes (10–25s each, max 800 KB per clip, same person). Same name = clips join that voice:</p>
+        <p style="font-size: 12px; color: var(--text-muted);">Upload 1–10 voice notes (10–25s each, max 800 KB per clip, same person). Same name = clips join that voice:</p>
         <input id="newSpeakerName" type="text" placeholder="Profile name (default voice is fixed)" />
         <input id="voiceFileInput" type="file" accept="audio/*" multiple />
         <button id="saveProfileBtn" class="speak-btn" style="padding: 8px; font-size: 14px;" onclick="uploadVoice()">Save Profile</button>
@@ -737,8 +737,8 @@
         showToast('Please select an audio file');
         return;
       }
-      if (fileInput.files.length > 8) {
-        showToast('Maximum 8 clips per upload');
+      if (fileInput.files.length > 10) {
+        showToast('Maximum 10 clips per upload');
         return;
       }
       for (const f of fileInput.files) {
